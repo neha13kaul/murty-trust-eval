@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Murty Trust — Evaluation Pusher</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F6F3;
+    --surface: #FFFFFF;
+    --border: #E2DED8;
+    --border-strong: #C8C4BC;
+    --text: #1A1917;
+    --text-muted: #6B6860;
+    --text-faint: #9E9B94;
+    --accent: #1A1917;
+    --success-bg: #EAF3DE;
+    --success-text: #27500A;
+    --success-border: #97C459;
+    --error-bg: #FCEBEB;
+    --error-text: #A32D2D;
+    --error-border: #F09595;
+    --info-bg: #E6F1FB;
+    --info-text: #0C447C;
+    --info-border: #85B7EB;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .page { max-width: 680px; margin: 0 auto; }
+
+  .page-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .page-header .eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .prefill-badge {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    margin-top: 4px;
+  }
+
+  .prefill-badge.filled {
+    background: var(--success-bg);
+    color: var(--success-text);
+    border: 1px solid var(--success-border);
+  }
+
+  .prefill-badge.empty {
+    background: var(--info-bg);
+    color: var(--info-text);
+    border: 1px solid var(--info-border);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 1rem;
+  }
+
+  .field { margin-bottom: 10px; }
+  .field:last-child { margin-bottom: 0; }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .field input, .field textarea {
+    width: 100%;
+    padding: 8px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .field input:focus, .field textarea:focus {
+    border-color: var(--border-strong);
+    background: #fff;
+  }
+
+  .field textarea {
+    resize: vertical;
+    min-height: 56px;
+    line-height: 1.5;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .score-tile {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 10px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .score-tile .s-label {
+    font-size: 10px;
+    color: var(--text-faint);
+    font-family: 'DM Mono', monospace;
+    line-height: 1.3;
+  }
+
+  .score-tile input {
+    width: 100%;
+    font-size: 20px;
+    font-weight: 300;
+    text-align: center;
+    background: #fff;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text);
+    outline: none;
+  }
+
+  .score-tile input:focus { border-color: var(--border-strong); }
+
+  .total-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .total-row .t-label { font-size: 12px; color: var(--text-muted); }
+
+  .total-row .t-val {
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .push-btn {
+    width: 100%;
+    padding: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--bg);
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .push-btn:hover { opacity: 0.82; }
+  .push-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .status {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    display: none;
+  }
+
+  .status.success { display: block; background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+  .status.error   { display: block; background: var(--error-bg);   color: var(--error-text);   border: 1px solid var(--error-border); }
+  .status.loading { display: block; background: var(--info-bg);    color: var(--info-text);    border: 1px solid var(--info-border); }
+
+  @media (max-width: 480px) {
+    .score-grid { grid-template-columns: repeat(2, 1fr); }
+    .two-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Murty Trust — M&E</p>
+      <h1>Grant evaluation pusher</h1>
+    </div>
+    <span class="prefill-badge empty" id="prefill-badge">manual entry</span>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Project details</p>
+    <div class="field">
+      <label>Project name</label>
+      <input id="projName" type="text" placeholder="Enter project name" />
+    </div>
+    <div class="two-col">
+      <div class="field">
+        <label>Grant year</label>
+        <input id="grantYear" type="text" placeholder="2025" />
+      </div>
+      <div class="field">
+        <label>Grant amount (₹ Lakh)</label>
+        <input id="grantAmt" type="text" placeholder="e.g. 45 or <100" />
+      </div>
+    </div>
+    <div class="field">
+      <label>Expected outcomes</label>
+      <textarea id="expectedOutcomes" placeholder="What were the key outcomes expected?"></textarea>
+    </div>
+    <div class="field">
+      <label>Key stakeholders</label>
+      <input id="stakeholders" type="text" placeholder="e.g. Students, Faculty, Industry" />
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Scores</p>
+    <div class="score-grid">
+      <div class="score-tile">
+        <span class="s-label">Quality</span>
+        <input id="s-quality" type="number" min="1" max="5" placeholder="1–5" />
+      </div>
+      <div class="score-tile">
+        <span class="s-label">Collaboration</span>
+        <input id="s-collab" type="number" min="1" max="5" placeholder="1–5" />
+      </div>
+      <div class="score-tile">
+        <span class="s-label">Asymmetric advantage</span>
+        <input id="s-asym" type="number" min="1" max="5" placeholder="1–5" />
+      </div>
+      <div class="score-tile">
+        <span class="s-label">Suitability</span>
+        <input id="s-suit" type="number" min="1" max="5" placeholder="1–5" />
+      </div>
+      <div class="score-tile">
+        <span class="s-label">Amplification</span>
+        <input id="s-amp" type="number" min="1" max="5" placeholder="1–5" />
+      </div>
+      <div class="score-tile">
+        <span class="s-label">Announcement-specific</span>
+        <input id="s-ann" type="text" placeholder="1–5 or N/A" style="font-size:14px;" />
+      </div>
+    </div>
+    <div class="total-row">
+      <span class="t-label">Total (out of 25)</span>
+      <span class="t-val" id="total-display">— / 25</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Rationales</p>
+    <div class="field">
+      <label>Quality</label>
+      <textarea id="r-quality" placeholder="One sentence rationale"></textarea>
+    </div>
+    <div class="field">
+      <label>Collaboration</label>
+      <textarea id="r-collab" placeholder="One sentence rationale"></textarea>
+    </div>
+    <div class="field">
+      <label>Asymmetric advantage</label>
+      <textarea id="r-asym" placeholder="One sentence rationale"></textarea>
+    </div>
+    <div class="field">
+      <label>Suitability</label>
+      <textarea id="r-suit" placeholder="One sentence rationale"></textarea>
+    </div>
+    <div class="field">
+      <label>Amplification</label>
+      <textarea id="r-amp" placeholder="One sentence rationale"></textarea>
+    </div>
+  </div>
+
+  <button class="push-btn" id="pushBtn" onclick="pushRow()">Push to shared tracker</button>
+  <div class="status" id="status-msg"></div>
+
+</div>
+
+<script>
+const FLOW_URL = "https://default157829b3db5c4d4e8fba718a971459.4b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/402b28469dfc4ba3af53c4d38b88a8ee/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=d_eNEs5JkHWQcafBYLDg19uG_OMzUSgue30MpBLdkpU";
+
+const SHAREPOINT_PAGE = "https://murtytrust.sharepoint.com/sites/MurtyTrust/SitePages/Grant-Evaluation-Pusher.aspx";
+
+function getParams() {
+  const p = new URLSearchParams(window.location.search);
+  const map = {};
+  for (const [k, v] of p.entries()) map[k] = v;
+  return map;
+}
+
+function fill(id, val) {
+  if (!val) return;
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = val;
+}
+
+function updateTotal() {
+  const ids = ['s-quality','s-collab','s-asym','s-suit','s-amp'];
+  let total = 0, allFilled = true;
+  ids.forEach(id => {
+    const v = parseFloat(document.getElementById(id).value);
+    if (!isNaN(v)) total += v; else allFilled = false;
+  });
+  document.getElementById('total-display').textContent = (allFilled ? Math.round(total) : '—') + ' / 25';
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const p = getParams();
+  const hasData = p.projName || p.quality;
+
+  if (hasData) {
+    fill('projName', p.projName);
+    fill('grantYear', p.grantYear);
+    fill('grantAmt', p.grantAmt);
+    fill('expectedOutcomes', p.expectedOutcomes);
+    fill('stakeholders', p.stakeholders);
+    fill('s-quality', p.quality);
+    fill('s-collab', p.collaboration);
+    fill('s-asym', p.asymmetricAdvantage);
+    fill('s-suit', p.suitability);
+    fill('s-amp', p.amplification);
+    fill('s-ann', p.announcementSpecific || 'N/A');
+    fill('r-quality', p.qualityRationale);
+    fill('r-collab', p.collaborationRationale);
+    fill('r-asym', p.asymmetricAdvantageRationale);
+    fill('r-suit', p.suitabilityRationale);
+    fill('r-amp', p.amplificationRationale);
+    updateTotal();
+
+    const badge = document.getElementById('prefill-badge');
+    badge.textContent = 'pre-filled from Claude';
+    badge.className = 'prefill-badge filled';
+  }
+
+  ['s-quality','s-collab','s-asym','s-suit','s-amp'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateTotal);
+  });
+});
+
+function g(id) { return document.getElementById(id).value.trim(); }
+
+function setStatus(msg, type) {
+  const el = document.getElementById('status-msg');
+  el.className = 'status ' + type;
+  el.textContent = msg;
+}
+
+async function pushRow() {
+  const btn = document.getElementById('pushBtn');
+  const required = ['projName','grantYear','grantAmt','expectedOutcomes','stakeholders'];
+  for (const id of required) {
+    if (!g(id)) { setStatus('Please fill in all project details before pushing.', 'error'); return; }
+  }
+
+  btn.disabled = true;
+  setStatus('Sending to SharePoint…', 'loading');
+
+  const amt = parseFloat(g('grantAmt').replace(/[^0-9.]/g,''));
+
+  const payload = {
+    projectName: g('projName'),
+    grantYear: g('grantYear'),
+    grantAmount: g('grantAmt'),
+    greaterThanCrore: (!isNaN(amt) && amt > 100) ? 'Yes' : 'No',
+    expectedOutcomes: g('expectedOutcomes'),
+    stakeholders: g('stakeholders'),
+    quality: g('s-quality'),
+    collaboration: g('s-collab'),
+    asymmetricAdvantage: g('s-asym'),
+    suitability: g('s-suit'),
+    amplification: g('s-amp'),
+    announcementSpecific: g('s-ann') || 'N/A',
+    qualityRationale: g('r-quality'),
+    collaborationRationale: g('r-collab'),
+    asymmetricAdvantageRationale: g('r-asym'),
+    suitabilityRationale: g('r-suit'),
+    amplificationRationale: g('r-amp')
+  };
+
+  try {
+    await fetch(FLOW_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    setStatus('Sent — check your SharePoint tracker in a few seconds to confirm the row appeared.', 'success');
+  } catch(e) {
+    setStatus('Error: ' + e.message, 'error');
+  }
+
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
